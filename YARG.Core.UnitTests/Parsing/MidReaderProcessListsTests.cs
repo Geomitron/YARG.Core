@@ -108,6 +108,38 @@ public class MidReaderProcessListsTests
     }
 
     [Test]
+    public void DrumFlamMarker_MakesFlamsOfCoveredNotesOnEveryDifficulty()
+    {
+        var expertKick = MidIOHelper.DRUMS_DIFF_START_LOOKUP[Difficulty.Expert];
+        var expertRed = expertKick + 1;
+        var hardRed = MidIOHelper.DRUMS_DIFF_START_LOOKUP[Difficulty.Hard] + 1;
+        // The marker's velocity doesn't limit it to some difficulties, as a lane's does
+        var midi = MakeMidi(MakeTrack(MidIOHelper.DRUMS_TRACK,
+            Note(0, 60, expertKick),
+            Note(0, 60, expertRed),
+            Note(0, 60, hardRed),
+            Note(240, 300, expertRed),
+            Note(480, 540, expertRed),
+            Note(480, 540, hardRed),
+            Note(0, 480, MidIOHelper.FLAM_MARKER, velocity: 96)));
+
+        var song = MidReader.ReadMidi(midi);
+        var expert = song.GetChart(MoonInstrument.Drums, Difficulty.Expert).notes;
+        var hard = song.GetChart(MoonInstrument.Drums, Difficulty.Hard).notes;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(expert, Has.Count.EqualTo(4));
+            AssertHasFlag(expert.Single(note => note.tick == 0 && note.drumPad == DrumPad.Kick), Flags.ProDrums_Flam);
+            AssertHasFlag(expert.Single(note => note.tick == 0 && note.drumPad == DrumPad.Red), Flags.ProDrums_Flam);
+            AssertHasFlag(expert.Single(note => note.tick == 240), Flags.ProDrums_Flam);
+            AssertDoesNotHaveFlag(expert.Single(note => note.tick == 480), Flags.ProDrums_Flam);
+            AssertHasFlag(hard.Single(note => note.tick == 0), Flags.ProDrums_Flam);
+            AssertDoesNotHaveFlag(hard.Single(note => note.tick == 480), Flags.ProDrums_Flam);
+        }
+    }
+
+    [Test]
     public void EliteDrumsStrictHatPedalStateTextEvent_SetsStrictHatPedalFlag()
     {
         var hatPedal = MidIOHelper.ELITE_DRUMS_DIFF_START_LOOKUP[Difficulty.Expert] - 2;

@@ -381,6 +381,11 @@ namespace YARG.Core.Chart.Hashing
                 flags |= BTrackNoteFlags.Accent;
             }
 
+            if (note.IsFlam)
+            {
+                flags |= BTrackNoteFlags.Flam;
+            }
+
             if (instrument == Instrument.FiveLaneDrums)
             {
                 return TryMapFiveLaneDrumNote(note, ref flags, out type);
